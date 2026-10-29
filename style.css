@@ -1,0 +1,61 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  background: linear-gradient(160deg, #4a90e2 0%, #7b5ea7 55%, #f28c6b 100%) fixed;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.app { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px; }
+
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  padding: 20px;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.search { display: flex; gap: 8px; padding: 8px; border-radius: 16px; }
+.search input {
+  flex: 1; border: 0; outline: 0; background: transparent;
+  color: #fff; font-size: 16px; padding: 8px 12px;
+}
+.search input::placeholder { color: rgba(255, 255, 255, 0.7); }
+.search button {
+  border: 0; border-radius: 12px; padding: 8px 16px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.25); color: #fff; font-size: 15px; font-weight: 600;
+}
+.search button:hover { background: rgba(255, 255, 255, 0.35); }
+
+.current { text-align: center; padding: 32px 20px; }
+.current h1 { font-size: 28px; font-weight: 500; }
+.temp { font-size: 88px; font-weight: 200; line-height: 1.1; }
+.desc { font-size: 20px; opacity: 0.9; }
+.hilo { margin-top: 6px; opacity: 0.85; }
+
+.details { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 8px; }
+.details span { display: block; font-size: 12px; text-transform: uppercase; opacity: 0.75; margin-bottom: 4px; }
+.details strong { font-size: 18px; font-weight: 500; }
+
+h2 { font-size: 13px; text-transform: uppercase; opacity: 0.75; font-weight: 600; margin-bottom: 8px; }
+
+.forecast { list-style: none; }
+.forecast li {
+  display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center;
+  padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.forecast li:first-child { border-top: 0; }
+.forecast .icon { font-size: 22px; text-align: center; }
+.forecast .range { text-align: right; }
+.forecast .lo { opacity: 0.65; margin-left: 8px; }
+
+.error { text-align: center; background: rgba(255, 60, 60, 0.3); padding: 10px; border-radius: 12px; }
+footer { text-align: center; font-size: 12px; opacity: 0.7; }
+footer a { color: #fff; }
