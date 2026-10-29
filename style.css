@@ -1,10 +1,49 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Light theme (default) */
+:root {
+  --text: #1c1c1e;
+  --bg: linear-gradient(160deg, #cfe6ff 0%, #e9ddff 55%, #ffe1d2 100%);
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-hover: rgba(255, 255, 255, 0.75);
+  --divider: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(31, 38, 135, 0.12);
+  --active: rgba(255, 255, 255, 0.95);
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
+  --text: #fff;
+  --bg: linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-hover: rgba(255, 255, 255, 0.18);
+  --divider: rgba(255, 255, 255, 0.15);
+  --shadow: rgba(0, 0, 0, 0.4);
+  --active: rgba(255, 255, 255, 0.22);
+}
+
+/* System theme follows the device setting */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --text: #fff;
+    --bg: linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-hover: rgba(255, 255, 255, 0.18);
+    --divider: rgba(255, 255, 255, 0.15);
+    --shadow: rgba(0, 0, 0, 0.4);
+    --active: rgba(255, 255, 255, 0.22);
+  }
+}
+
 body {
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-  color: #fff;
-  background: linear-gradient(160deg, #4a90e2 0%, #7b5ea7 55%, #f28c6b 100%) fixed;
+  color: var(--text);
+  background: var(--bg) fixed;
+  transition: color 0.3s;
   display: flex;
   justify-content: center;
   padding: 24px 16px;
@@ -13,26 +52,35 @@ body {
 .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px; }
 
 .glass {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 24px;
   padding: 20px;
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px var(--shadow);
 }
 
 .search { display: flex; gap: 8px; padding: 8px; border-radius: 16px; }
 .search input {
   flex: 1; border: 0; outline: 0; background: transparent;
-  color: #fff; font-size: 16px; padding: 8px 12px;
+  color: var(--text); font-size: 16px; padding: 8px 12px;
 }
-.search input::placeholder { color: rgba(255, 255, 255, 0.7); }
+.search input::placeholder { color: var(--text); opacity: 0.55; }
 .search button {
   border: 0; border-radius: 12px; padding: 8px 16px; cursor: pointer;
-  background: rgba(255, 255, 255, 0.25); color: #fff; font-size: 15px; font-weight: 600;
+  background: var(--glass-hover); color: var(--text); font-size: 15px; font-weight: 600;
 }
-.search button:hover { background: rgba(255, 255, 255, 0.35); }
+.search button:hover { background: var(--active); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.greeting { font-size: 20px; font-weight: 600; }
+.theme { display: flex; gap: 2px; padding: 3px; border-radius: 12px; }
+.theme button {
+  border: 0; border-radius: 9px; padding: 6px 10px; cursor: pointer;
+  background: transparent; color: var(--text); font-size: 13px; font-weight: 500;
+}
+.theme button[aria-pressed="true"] { background: var(--active); box-shadow: 0 1px 4px var(--shadow); }
 
 .current { text-align: center; padding: 32px 20px; }
 .current h1 { font-size: 28px; font-weight: 500; }
@@ -49,7 +97,7 @@ h2 { font-size: 13px; text-transform: uppercase; opacity: 0.75; font-weight: 600
 .forecast { list-style: none; }
 .forecast li {
   display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center;
-  padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 0; border-top: 1px solid var(--divider);
 }
 .forecast li:first-child { border-top: 0; }
 .forecast .icon { font-size: 22px; text-align: center; }
@@ -58,4 +106,4 @@ h2 { font-size: 13px; text-transform: uppercase; opacity: 0.75; font-weight: 600
 
 .error { text-align: center; background: rgba(255, 60, 60, 0.3); padding: 10px; border-radius: 12px; }
 footer { text-align: center; font-size: 12px; opacity: 0.7; }
-footer a { color: #fff; }
+footer a { color: var(--text); }

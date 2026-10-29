@@ -5,9 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Weather</title>
   <link rel="stylesheet" href="style.css">
+  <script>
+    try { document.documentElement.dataset.theme = localStorage.getItem("theme") || "system"; }
+    catch { document.documentElement.dataset.theme = "system"; }
+  </script>
 </head>
 <body>
   <main class="app">
+    <header class="top">
+      <p id="greeting" class="greeting">Hello, Abdur Rehman</p>
+      <div class="glass theme" role="group" aria-label="Theme">
+        <button type="button" data-theme-choice="light">Light</button>
+        <button type="button" data-theme-choice="dark">Dark</button>
+        <button type="button" data-theme-choice="system">System</button>
+      </div>
+    </header>
+
     <form id="search" class="glass search">
       <input id="city" type="text" placeholder="Search city…" autocomplete="off">
       <button type="submit">Go</button>

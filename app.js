@@ -67,4 +67,22 @@ $("search").addEventListener("submit", (e) => {
   if (q) searchCity(q);
 });
 
+function greet() {
+  const h = new Date().getHours();
+  const part = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  $("greeting").textContent = `${part}, Abdur Rehman`;
+}
+
+function setTheme(choice) {
+  document.documentElement.dataset.theme = choice;
+  try { localStorage.setItem("theme", choice); } catch {}
+  document.querySelectorAll("[data-theme-choice]").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.themeChoice === choice));
+}
+
+document.querySelectorAll("[data-theme-choice]").forEach((b) =>
+  b.addEventListener("click", () => setTheme(b.dataset.themeChoice)));
+
+setTheme(document.documentElement.dataset.theme || "system");
+greet();
 loadWeather(DEFAULT);
