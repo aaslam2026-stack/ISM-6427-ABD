@@ -13,7 +13,10 @@
 <body>
   <main class="app">
     <header class="top">
-      <p id="greeting" class="greeting">Hello, Abdur Rehman</p>
+      <form id="search" class="glass search">
+        <input id="city" type="text" placeholder="Search city…" autocomplete="off" aria-label="City">
+        <button type="submit">Go</button>
+      </form>
       <div class="glass theme" role="group" aria-label="Theme">
         <button type="button" data-theme-choice="light">Light</button>
         <button type="button" data-theme-choice="dark">Dark</button>
@@ -21,22 +24,40 @@
       </div>
     </header>
 
-    <form id="search" class="glass search">
-      <input id="city" type="text" placeholder="Search city…" autocomplete="off">
-      <button type="submit">Go</button>
-    </form>
-
     <section class="glass current">
       <h1 id="place">Boca Raton</h1>
-      <div id="temp" class="temp">--°</div>
+      <div class="now">
+        <span id="icon" class="big-icon">⛅</span>
+        <span id="temp" class="temp">--°</span>
+      </div>
       <div id="desc" class="desc">Loading…</div>
       <div id="hilo" class="hilo"></div>
+      <div id="updated" class="updated"></div>
     </section>
 
-    <section class="glass details">
-      <div><span>Feels like</span><strong id="feels">--</strong></div>
-      <div><span>Humidity</span><strong id="humidity">--</strong></div>
-      <div><span>Wind</span><strong id="wind">--</strong></div>
+    <section id="flood" class="glass flood">
+      <div class="flood-head">
+        <span class="label">🌊 Flood Risk</span>
+        <span id="flood-level" class="badge">--</span>
+      </div>
+      <p id="flood-text" class="flood-text">Checking rain and river forecasts…</p>
+      <p class="note">Estimate from Open-Meteo rain and river forecasts. Not an official warning. Check <a href="https://www.weather.gov/" target="_blank" rel="noopener">weather.gov</a> for alerts.</p>
+    </section>
+
+    <section class="glass">
+      <h2>Next 24 Hours</h2>
+      <ul id="hourly" class="hourly"></ul>
+    </section>
+
+    <section class="tiles">
+      <div class="glass tile"><span>💧 Humidity</span><strong id="humidity">--</strong><small id="dew"></small></div>
+      <div class="glass tile"><span>🌡️ Feels Like</span><strong id="feels">--</strong><small>Apparent temperature</small></div>
+      <div class="glass tile"><span>🌬️ Wind</span><strong id="wind">--</strong><small id="gusts"></small></div>
+      <div class="glass tile"><span>☔ Rain</span><strong id="rain">--</strong><small id="rain-today"></small></div>
+      <div class="glass tile"><span>☀️ UV Index</span><strong id="uv">--</strong><small id="uv-level"></small></div>
+      <div class="glass tile"><span>👁️ Visibility</span><strong id="visibility">--</strong><small>Distance you can see</small></div>
+      <div class="glass tile"><span>⏲️ Pressure</span><strong id="pressure">--</strong><small>Sea level</small></div>
+      <div class="glass tile"><span>🌅 Sun</span><strong id="sunrise">--</strong><small id="sunset"></small></div>
     </section>
 
     <section class="glass">
