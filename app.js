@@ -14,19 +14,29 @@ const describe = (code, isDay = 1) => {
   return [text, !isDay && code <= 1 ? "🌙" : icon];
 };
 const $ = (id) => document.getElementById(id);
+
+// Units: °F uses mph / in / mi / inHg, °C uses km/h / mm / km / hPa
+let units = "F";
+try { units = localStorage.getItem("units") || "F"; } catch {}
+let place = null;
+const metric = () => units === "C";
+const fmtRain = (inches) => metric() ? `${(inches * 25.4).toFixed(1)} mm` : `${inches.toFixed(2)} in`;
 const round = (n) => Math.round(n);
 const time = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 const compass = (deg) => ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 const uvLevel = (uv) => uv < 3 ? "Low" : uv < 6 ? "Moderate" : uv < 8 ? "High" : uv < 11 ? "Very High" : "Extreme";
 
-async function loadWeather({ name, lat, lon, country }) {
+async function loadWeather(loc) {
+  const { name, lat, lon, country } = loc;
+  place = loc;
   $("error").hidden = true;
+  renderMap(name, lat, lon);
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation,weather_code,is_day,` +
     `wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,visibility,uv_index` +
     `&hourly=temperature_2m,weather_code,precipitation_probability,is_day` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max` +
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7`;
+    `&temperature_unit=${metric() ? "celsius" : "fahrenheit"}&wind_speed_unit=${metric() ? "kmh" : "mph"}&precipitation_unit=inch&timezone=auto&forecast_days=7`;
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error();
@@ -55,15 +65,17 @@ function renderCurrent(name, { current: c, current_units: u, daily: d }) {
   $("humidity").textContent = `${c.relative_humidity_2m}%`;
   $("dew").textContent = `Dew point ${round(c.dew_point_2m)}°`;
   $("feels").textContent = `${round(c.apparent_temperature)}°`;
-  $("wind").textContent = `${round(c.wind_speed_10m)} mph ${compass(c.wind_direction_10m)}`;
-  $("gusts").textContent = `Gusts ${round(c.wind_gusts_10m)} mph`;
+  const speed = metric() ? "km/h" : "mph";
+  $("wind").textContent = `${round(c.wind_speed_10m)} ${speed} ${compass(c.wind_direction_10m)}`;
+  $("gusts").textContent = `Gusts ${round(c.wind_gusts_10m)} ${speed}`;
   $("rain").textContent = `${d.precipitation_probability_max[0] ?? 0}%`;
-  $("rain-today").textContent = `${d.precipitation_sum[0].toFixed(2)} in expected today`;
+  $("rain-today").textContent = `${fmtRain(d.precipitation_sum[0])} expected today`;
   $("uv").textContent = round(c.uv_index);
   $("uv-level").textContent = uvLevel(c.uv_index);
-  const miles = u.visibility === "ft" ? c.visibility / 5280 : c.visibility / 1609.34;
-  $("visibility").textContent = `${miles >= 10 ? 10 : miles.toFixed(1)} mi`;
-  $("pressure").textContent = `${(c.pressure_msl * 0.02953).toFixed(2)} inHg`;
+  const meters = u.visibility === "ft" ? c.visibility * 0.3048 : c.visibility;
+  const dist = metric() ? Math.min(meters / 1000, 16) : Math.min(meters / 1609.34, 10);
+  $("visibility").textContent = `${dist.toFixed(dist >= 10 ? 0 : 1)} ${metric() ? "km" : "mi"}`;
+  $("pressure").textContent = metric() ? `${round(c.pressure_msl)} hPa` : `${(c.pressure_msl * 0.02953).toFixed(2)} inHg`;
   $("sunrise").textContent = time(d.sunrise[0]);
   $("sunset").textContent = `Sunset ${time(d.sunset[0])}`;
 }
@@ -166,7 +178,7 @@ async function loadFlood(lat, lon, daily, alerts) {
   if (maxDay >= 3 || (ratio && ratio >= 3) || floodAlerts.some((a) => /warning|emergency/i.test(a.event))) risk = "high";
   else if (maxDay >= 1.5 || rain3 >= 3 || (ratio && ratio >= 1.8) || floodAlerts.length) risk = "moderate";
 
-  const reasons = [`${rain3.toFixed(2)} in of rain expected over the next 3 days`];
+  const reasons = [`${fmtRain(rain3)} of rain expected over the next 3 days`];
   if (floodAlerts.length) reasons.unshift(`an active NWS ${floodAlerts.map((a) => a.event).join(", ")}`);
   if (ratio && ratio >= 1.3) reasons.push(`nearby river flow forecast at ${ratio.toFixed(1)}× its 30-day average`);
   const advice = { low: "No flooding expected.", moderate: "Watch for street and low-lying area flooding.", high: "Flooding is likely. Avoid flooded roads and follow local alerts." };
@@ -309,5 +321,28 @@ $("search").addEventListener("submit", (e) => {
   if (q) searchCity(q);
 });
 
+function renderMap(name, lat, lon) {
+  const d = 0.08;
+  $("map").src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - d},${lat - d},${lon + d},${lat + d}` +
+    `&layer=mapnik&marker=${lat},${lon}`;
+  $("google-maps").href = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  $("apple-maps").href = `https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(name)}`;
+}
+
+function setUnits(choice) {
+  units = choice;
+  try { localStorage.setItem("units", choice); } catch {}
+  document.querySelectorAll("[data-unit-choice]").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.unitChoice === choice));
+}
+
+document.querySelectorAll("[data-unit-choice]").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (b.dataset.unitChoice === units) return;
+    setUnits(b.dataset.unitChoice);
+    if (place) loadWeather(place);
+  }));
+
+setUnits(units);
 setTheme(document.documentElement.dataset.theme || "system");
 loadWeather(DEFAULT);

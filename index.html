@@ -19,6 +19,10 @@
         <button type="submit">Go</button>
         <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
       </form>
+      <div class="glass theme" role="group" aria-label="Units">
+        <button type="button" data-unit-choice="F">°F</button>
+        <button type="button" data-unit-choice="C">°C</button>
+      </div>
       <div class="glass theme" role="group" aria-label="Theme">
         <button type="button" data-theme-choice="light">Light</button>
         <button type="button" data-theme-choice="dark">Dark</button>
@@ -83,8 +87,19 @@
       <ul id="forecast" class="forecast"></ul>
     </section>
 
+    <section class="glass">
+      <h2>🗺️ Map</h2>
+      <div class="map-wrap">
+        <iframe id="map" title="Map of selected location" loading="lazy"></iframe>
+      </div>
+      <div class="map-links">
+        <a id="google-maps" class="map-btn" target="_blank" rel="noopener">📍 Google Maps</a>
+        <a id="apple-maps" class="map-btn" target="_blank" rel="noopener">🍎 Apple Maps</a>
+      </div>
+    </section>
+
     <p id="error" class="error" hidden></p>
-    <footer>Weather and air quality by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> and the <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a></footer>
+    <footer>Weather and air quality by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · Alerts by the <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a></footer>
   </main>
   <script src="app.js"></script>
 </body>
