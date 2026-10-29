@@ -14,8 +14,10 @@
   <main class="app">
     <header class="top">
       <form id="search" class="glass search">
-        <input id="city" type="text" placeholder="Search city…" autocomplete="off" aria-label="City">
+        <input id="city" type="text" placeholder="Search any city or country…" autocomplete="off"
+          aria-label="City" role="combobox" aria-controls="suggestions" aria-expanded="false">
         <button type="submit">Go</button>
+        <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
       </form>
       <div class="glass theme" role="group" aria-label="Theme">
         <button type="button" data-theme-choice="light">Light</button>
@@ -35,13 +37,18 @@
       <div id="updated" class="updated"></div>
     </section>
 
+    <section id="alerts" class="glass alerts">
+      <h2>⚠️ NWS Weather Alerts</h2>
+      <div id="alerts-list"><p class="muted">Checking the National Weather Service…</p></div>
+    </section>
+
     <section id="flood" class="glass flood">
       <div class="flood-head">
         <span class="label">🌊 Flood Risk</span>
         <span id="flood-level" class="badge">--</span>
       </div>
       <p id="flood-text" class="flood-text">Checking rain and river forecasts…</p>
-      <p class="note">Estimate from Open-Meteo rain and river forecasts. Not an official warning. Check <a href="https://www.weather.gov/" target="_blank" rel="noopener">weather.gov</a> for alerts.</p>
+      <p id="flood-note" class="note">Estimate from Open-Meteo rain and river forecasts, plus any NWS flood alerts.</p>
     </section>
 
     <section class="glass">
@@ -66,7 +73,7 @@
     </section>
 
     <p id="error" class="error" hidden></p>
-    <footer>Data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></footer>
+    <footer>Data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> and the <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a></footer>
   </main>
   <script src="app.js"></script>
 </body>

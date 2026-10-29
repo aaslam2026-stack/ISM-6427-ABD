@@ -1,4 +1,4 @@
-const DEFAULT = { name: "Boca Raton, Florida", lat: 26.3587, lon: -80.0831 };
+const DEFAULT = { name: "Boca Raton, Florida", lat: 26.3587, lon: -80.0831, country: "US" };
 
 const CODES = {
   0: ["Clear", "☀️"], 1: ["Mostly Clear", "🌤️"], 2: ["Partly Cloudy", "⛅"], 3: ["Cloudy", "☁️"],
@@ -19,7 +19,7 @@ const time = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric
 const compass = (deg) => ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(deg / 45) % 8];
 const uvLevel = (uv) => uv < 3 ? "Low" : uv < 6 ? "Moderate" : uv < 8 ? "High" : uv < 11 ? "Very High" : "Extreme";
 
-async function loadWeather({ name, lat, lon }) {
+async function loadWeather({ name, lat, lon, country }) {
   $("error").hidden = true;
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation,weather_code,is_day,` +
@@ -34,7 +34,8 @@ async function loadWeather({ name, lat, lon }) {
     renderCurrent(name, data);
     renderHourly(data.hourly, data.current.time);
     renderDaily(data.daily);
-    loadFlood(lat, lon, data.daily);
+    const alerts = await loadAlerts(lat, lon, country);
+    loadFlood(lat, lon, data.daily, alerts);
   } catch {
     showError("Couldn't load weather. Please try again.");
   }
@@ -89,7 +90,7 @@ function renderDaily(d) {
 }
 
 // Flood risk: combines upcoming rainfall with the river discharge forecast from the Open-Meteo Flood API.
-async function loadFlood(lat, lon, daily) {
+async function loadFlood(lat, lon, daily, alerts) {
   const rain3 = daily.precipitation_sum.slice(0, 3).reduce((a, b) => a + b, 0);
   const maxDay = Math.max(...daily.precipitation_sum);
   let ratio = null;
@@ -104,12 +105,14 @@ async function loadFlood(lat, lon, daily) {
     if (past.length && future.length && avg > 0) ratio = Math.max(...future) / avg;
   } catch { /* no river data for this spot, rely on rainfall only */ }
 
+  const floodAlerts = (alerts || []).filter((a) => /flood/i.test(a.event));
   let risk = "low";
-  if (maxDay >= 3 || (ratio && ratio >= 3)) risk = "high";
-  else if (maxDay >= 1.5 || rain3 >= 3 || (ratio && ratio >= 1.8)) risk = "moderate";
+  if (maxDay >= 3 || (ratio && ratio >= 3) || floodAlerts.some((a) => /warning|emergency/i.test(a.event))) risk = "high";
+  else if (maxDay >= 1.5 || rain3 >= 3 || (ratio && ratio >= 1.8) || floodAlerts.length) risk = "moderate";
 
   const reasons = [`${rain3.toFixed(2)} in of rain expected over the next 3 days`];
-  if (ratio) reasons.push(`nearby river flow forecast at ${ratio.toFixed(1)}× its 30-day average`);
+  if (floodAlerts.length) reasons.unshift(`an active NWS ${floodAlerts.map((a) => a.event).join(", ")}`);
+  if (ratio && ratio >= 1.3) reasons.push(`nearby river flow forecast at ${ratio.toFixed(1)}× its 30-day average`);
   const advice = { low: "No flooding expected.", moderate: "Watch for street and low-lying area flooding.", high: "Flooding is likely. Avoid flooded roads and follow local alerts." };
 
   $("flood").dataset.risk = risk;
@@ -117,17 +120,116 @@ async function loadFlood(lat, lon, daily) {
   $("flood-text").textContent = `${advice[risk]} Based on ${reasons.join(" and ")}.`;
 }
 
+// Search with dropdown suggestions (Open-Meteo Geocoding API covers cities worldwide)
+let results = [];
+let active = -1;
+let timer;
+
+const flag = (code) => code ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : "📍";
+const placeName = (p) => [p.name, p.admin1 && p.admin1 !== p.name ? p.admin1 : null].filter(Boolean).join(", ");
+
+async function fetchPlaces(query) {
+  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=8&language=en`);
+  const data = await res.json();
+  return data.results || [];
+}
+
+function showSuggestions(list, query) {
+  results = list;
+  active = -1;
+  const box = $("suggestions");
+  box.innerHTML = list.length
+    ? list.map((p, i) => `<li role="option" data-i="${i}"><span class="flag">${flag(p.country_code)}</span>
+        <span>${escapeHtml(placeName(p))}<small>${escapeHtml(p.country || "")}</small></span></li>`).join("")
+    : `<li class="empty">No places found for "${escapeHtml(query)}"</li>`;
+  box.hidden = false;
+  $("city").setAttribute("aria-expanded", "true");
+}
+
+function hideSuggestions() {
+  $("suggestions").hidden = true;
+  $("city").setAttribute("aria-expanded", "false");
+  active = -1;
+}
+
+function choosePlace(p) {
+  hideSuggestions();
+  $("city").value = "";
+  loadWeather({ name: `${placeName(p)}${p.country_code !== "US" && p.country ? ", " + p.country : ""}`,
+    lat: p.latitude, lon: p.longitude, country: p.country_code });
+}
+
+function highlight(i) {
+  const items = [...$("suggestions").querySelectorAll("[data-i]")];
+  if (!items.length) return;
+  active = (i + items.length) % items.length;
+  items.forEach((li, j) => li.setAttribute("aria-selected", j === active));
+  items[active].scrollIntoView({ block: "nearest" });
+}
+
+$("city").addEventListener("input", () => {
+  clearTimeout(timer);
+  const q = $("city").value.trim();
+  if (q.length < 2) return hideSuggestions();
+  timer = setTimeout(async () => {
+    try { showSuggestions(await fetchPlaces(q), q); } catch { hideSuggestions(); }
+  }, 250);
+});
+
+$("city").addEventListener("keydown", (e) => {
+  if ($("suggestions").hidden) return;
+  if (e.key === "ArrowDown") { e.preventDefault(); highlight(active + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); highlight(active - 1); }
+  else if (e.key === "Escape") hideSuggestions();
+});
+
+$("suggestions").addEventListener("mousedown", (e) => {
+  const li = e.target.closest("[data-i]");
+  if (li) { e.preventDefault(); choosePlace(results[li.dataset.i]); }
+});
+
+$("city").addEventListener("blur", () => setTimeout(hideSuggestions, 100));
+
 async function searchCity(query) {
   try {
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
-    const data = await res.json();
-    const place = data.results && data.results[0];
-    if (!place) return showError(`No results for "${query}".`);
-    const name = [place.name, place.admin1 || place.country].filter(Boolean).join(", ");
-    loadWeather({ name, lat: place.latitude, lon: place.longitude });
+    if (active >= 0 && results[active]) return choosePlace(results[active]);
+    const list = await fetchPlaces(query);
+    if (!list.length) return showError(`No results for "${query}".`);
+    choosePlace(list[0]);
   } catch {
     showError("Search failed. Please try again.");
   }
+}
+
+// National Weather Service active alerts (US locations only)
+async function loadAlerts(lat, lon, country) {
+  const box = $("alerts-list");
+  if (country && country !== "US") {
+    box.innerHTML = `<p class="muted">NWS alerts cover US locations only.</p>`;
+    return null;
+  }
+  box.innerHTML = `<p class="muted">Checking the National Weather Service…</p>`;
+  try {
+    const res = await fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,
+      { headers: { Accept: "application/geo+json" } });
+    if (!res.ok) throw new Error();
+    const alerts = (await res.json()).features.map((f) => f.properties);
+    box.innerHTML = alerts.length
+      ? alerts.map((a) => `<details class="alert">
+          <summary><span>${escapeHtml(a.event)}</span><span class="sev ${escapeHtml(a.severity)}">${escapeHtml(a.severity)}</span></summary>
+          <p class="until">Until ${new Date(a.ends || a.expires).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}</p>
+          <div class="body"><strong>${escapeHtml(a.headline || "")}</strong>\n\n${escapeHtml(a.description || "")}${a.instruction ? "\n\n" + escapeHtml(a.instruction) : ""}</div>
+        </details>`).join("")
+      : `<p class="ok">✅ No active alerts for this area.</p>`;
+    return alerts;
+  } catch {
+    box.innerHTML = `<p class="muted">Couldn't reach the National Weather Service right now.</p>`;
+    return null;
+  }
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 function showError(msg) {

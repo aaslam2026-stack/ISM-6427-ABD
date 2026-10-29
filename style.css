@@ -12,6 +12,7 @@
   --shadow: rgba(31, 38, 135, 0.12);
   --active: rgba(255, 255, 255, 0.95);
   --rain: #0a6fd6;
+  --menu: rgba(255, 255, 255, 0.95);
 }
 
 /* Dark theme */
@@ -26,6 +27,7 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --active: rgba(255, 255, 255, 0.22);
   --rain: #7cc4ff;
+  --menu: rgba(28, 44, 54, 0.96);
 }
 
 /* System theme follows the device setting */
@@ -41,7 +43,10 @@
     --shadow: rgba(0, 0, 0, 0.4);
     --active: rgba(255, 255, 255, 0.22);
     --rain: #7cc4ff;
+    --menu: rgba(28, 44, 54, 0.96);
+  --menu: rgba(28, 44, 54, 0.96);
   --rain: #7cc4ff;
+  --menu: rgba(28, 44, 54, 0.96);
   }
 }
 
@@ -71,8 +76,8 @@ h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 a { color: var(--text); }
 
 /* Top bar */
-.top { display: flex; gap: 10px; flex-wrap: wrap; }
-.search { flex: 1 1 240px; display: flex; gap: 8px; padding: 6px; border-radius: 14px; }
+.top { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 10; }
+.search { position: relative; z-index: 2; flex: 1 1 240px; display: flex; gap: 8px; padding: 6px; border-radius: 14px; }
 .search input {
   flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
   color: var(--text); font-size: 16px; padding: 8px 10px;
@@ -86,6 +91,32 @@ a { color: var(--text); }
 .theme { display: flex; gap: 2px; padding: 4px; border-radius: 14px; }
 .theme button { border-radius: 10px; padding: 6px 10px; background: transparent; font-size: 13px; font-weight: 500; }
 .theme button[aria-pressed="true"] { background: var(--active); box-shadow: 0 1px 4px var(--shadow); }
+
+/* Search dropdown */
+.suggestions {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; list-style: none;
+  background: var(--menu); border: 1px solid var(--glass-border); border-radius: 14px;
+  box-shadow: 0 12px 32px var(--shadow); padding: 6px; max-height: 320px; overflow-y: auto;
+}
+.suggestions li { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer; }
+.suggestions li[aria-selected="true"], .suggestions li:hover { background: var(--glass-hover); }
+.suggestions .flag { font-size: 20px; }
+.suggestions small { display: block; color: var(--muted); font-size: 12px; }
+.suggestions .empty { cursor: default; color: var(--muted); }
+
+/* NWS alerts */
+.muted { color: var(--muted); font-size: 14px; }
+.ok { font-size: 15px; }
+.alert { border-top: 1px solid var(--divider); padding: 10px 0; }
+.alert:first-child { border-top: 0; padding-top: 0; }
+.alert summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; list-style: none; }
+.alert summary::-webkit-details-marker { display: none; }
+.sev { flex-shrink: 0; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #8e8e93; }
+.sev.Extreme, .sev.Severe { background: #ff3b30; }
+.sev.Moderate { background: #ff9f0a; }
+.sev.Minor { background: #ffcc00; color: #1c1c1e; }
+.alert .until { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.alert .body { margin-top: 8px; font-size: 13px; white-space: pre-line; }
 
 /* Current conditions */
 .current { text-align: center; padding: 28px 18px; }
