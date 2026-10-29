@@ -32,6 +32,8 @@ async function loadWeather({ name, lat, lon, country }) {
     if (!res.ok) throw new Error();
     const data = await res.json();
     renderCurrent(name, data);
+    startClock(data.timezone);
+    loadAirQuality(lat, lon);
     renderHourly(data.hourly, data.current.time);
     renderDaily(data.daily);
     const alerts = await loadAlerts(lat, lon, country);
@@ -87,6 +89,60 @@ function renderDaily(d) {
       <span class="pop">${pop >= 20 ? "💧" + pop + "%" : ""}</span>
       <span class="range">${round(d.temperature_2m_max[i])}°<span class="lo">${round(d.temperature_2m_min[i])}°</span></span></li>`;
   }).join("");
+}
+
+// Live local time for the selected place
+let clockTimer;
+function startClock(timeZone) {
+  clearInterval(clockTimer);
+  const tick = () => {
+    const now = new Date();
+    const t = now.toLocaleTimeString("en-US", { timeZone, hour: "numeric", minute: "2-digit", second: "2-digit" });
+    const d = now.toLocaleDateString("en-US", { timeZone, weekday: "long", month: "short", day: "numeric" });
+    const zone = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" })
+      .formatToParts(now).find((p) => p.type === "timeZoneName").value;
+    $("clock").innerHTML = `🕒 Local time <strong>${t}</strong> ${zone} · ${d}`;
+  };
+  tick();
+  clockTimer = setInterval(tick, 1000);
+}
+
+// Air quality: current US AQI and 5-day outlook (daily peak of hourly AQI)
+const AQI_LEVELS = [
+  [50, "Good", "#34c759"], [100, "Moderate", "#ffcc00"], [150, "Unhealthy for Sensitive Groups", "#ff9f0a"],
+  [200, "Unhealthy", "#ff3b30"], [300, "Very Unhealthy", "#af52de"], [Infinity, "Hazardous", "#8e1b3a"],
+];
+const aqiLevel = (v) => AQI_LEVELS.find(([max]) => v <= max);
+
+async function loadAirQuality(lat, lon) {
+  try {
+    const res = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}` +
+      `&current=us_aqi,pm2_5,pm10,ozone&hourly=us_aqi&forecast_days=5&timezone=auto`);
+    if (!res.ok) throw new Error();
+    const { current: c, hourly: h } = await res.json();
+
+    const [, label, color] = aqiLevel(c.us_aqi);
+    $("aqi").textContent = round(c.us_aqi);
+    $("aqi").style.color = color;
+    $("aqi-cat").textContent = label;
+    $("aqi-detail").textContent = `PM2.5 ${round(c.pm2_5)} · PM10 ${round(c.pm10)} · Ozone ${round(c.ozone)} µg/m³`;
+
+    const days = {};
+    h.time.forEach((t, i) => {
+      if (h.us_aqi[i] == null) return;
+      const day = t.slice(0, 10);
+      days[day] = Math.max(days[day] ?? 0, h.us_aqi[i]);
+    });
+    $("aqi-days").innerHTML = Object.entries(days).slice(0, 5).map(([day, v], i) => {
+      const [, cat, col] = aqiLevel(v);
+      const name = i === 0 ? "Today" : new Date(day + "T00:00").toLocaleDateString("en-US", { weekday: "short" });
+      return `<li><span>${name}</span><span class="bar"><span style="width:${Math.min(100, v / 3)}%;background:${col}"></span></span>
+        <span class="num">${round(v)}</span><span></span><span class="cat">${cat}</span></li>`;
+    }).join("");
+  } catch {
+    $("aqi-cat").textContent = "Air quality unavailable";
+    $("aqi-days").innerHTML = "";
+  }
 }
 
 // Flood risk: combines upcoming rainfall with the river discharge forecast from the Open-Meteo Flood API.

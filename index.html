@@ -34,6 +34,7 @@
       </div>
       <div id="desc" class="desc">Loading…</div>
       <div id="hilo" class="hilo"></div>
+      <div id="clock" class="clock"></div>
       <div id="updated" class="updated"></div>
     </section>
 
@@ -68,12 +69,22 @@
     </section>
 
     <section class="glass">
+      <h2>🍃 Air Quality (US AQI)</h2>
+      <div class="aqi-now">
+        <span id="aqi" class="aqi-value">--</span>
+        <div><div id="aqi-cat" class="aqi-cat">Loading…</div><div id="aqi-detail" class="aqi-sub"></div></div>
+      </div>
+      <h2>5-Day Outlook (daily peak)</h2>
+      <ul id="aqi-days" class="aqi-days"></ul>
+    </section>
+
+    <section class="glass">
       <h2>7-Day Forecast</h2>
       <ul id="forecast" class="forecast"></ul>
     </section>
 
     <p id="error" class="error" hidden></p>
-    <footer>Data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> and the <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a></footer>
+    <footer>Weather and air quality by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> and the <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a></footer>
   </main>
   <script src="app.js"></script>
 </body>
