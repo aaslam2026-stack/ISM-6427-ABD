@@ -198,3 +198,5 @@ footer { text-align: center; font-size: 12px; color: var(--muted); }
   padding: 10px; border-radius: 12px; background: var(--glass-hover); border: 1px solid var(--glass-border);
 }
 .map-btn:hover { background: var(--active); }
+.map-btn { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.map-btn .logo { width: 16px; height: 16px; margin-top: -2px; }
